@@ -84,13 +84,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="add-btn" onclick="window.openModal()">+ Eintragen</button>
     </div>
   </div>
+
   <div class="stats-grid" id="stats-grid">
     <div class="stat-card"><div class="stat-label">Wettkämpfe</div><div class="stat-value">–</div></div>
     <div class="stat-card"><div class="stat-label">Disziplinen</div><div class="stat-value">–</div></div>
     <div class="stat-card"><div class="stat-label">Siege</div><div class="stat-value">–</div></div>
     <div class="stat-card"><div class="stat-label">Bestzeiten</div><div class="stat-value">–</div></div>
   </div>
+
   <div id="pb-section"></div>
+
   <div class="toolbar">
     <select id="filter-disc" onchange="render()"><option value="">Alle Disziplinen</option></select>
     <select id="sort-col" onchange="render()">
@@ -102,13 +105,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </select>
     <input type="text" id="search" placeholder="Suche..." oninput="render()" style="min-width:120px;flex:1;">
   </div>
+
   <div id="cards-container"><div class="empty"><span class="spinner"></span> Lade Daten...</div></div>
 </div>
+
 <div id="modal-container"></div>
 <div class="toast" id="toast"></div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyB0VSPV40lWiW9OAacsvFKcvCEgz-31pDA",
   authDomain: "leitathletik-tracker.firebaseapp.com",
@@ -118,9 +125,11 @@ const firebaseConfig = {
   messagingSenderId: "217887644808",
   appId: "1:217887644808:web:37d5d317485bb98ebf933d"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const resultsRef = ref(db, 'results');
+
 const DISCIPLINE_GROUPS = [
   { label: 'Lauf (Bahn)', options: ['60 m','100 m','200 m','400 m','800 m','1000 m','1500 m','2000 m','3000 m','5000 m','10000 m'] },
   { label: 'Straße / Cross', options: ['1 Meile','5 km Lauf','10 km Lauf','Halbmarathon','Marathon','Cross-Lauf'] },
@@ -131,6 +140,7 @@ const DISCIPLINE_GROUPS = [
   { label: 'Mehrkampf', options: ['5-Kampf','7-Kampf','10-Kampf'] },
   { label: 'Sonstiges', options: ['Sonstiges'] }
 ];
+
 function discSelectHTML(sel) {
   return DISCIPLINE_GROUPS.map(g =>
     `<optgroup label="${g.label}">${g.options.map(d =>
@@ -138,31 +148,38 @@ function discSelectHTML(sel) {
     ).join('')}</optgroup>`
   ).join('');
 }
+
 let results = [];
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
+
 function setSyncStatus(state) {
   const el = document.getElementById('sync-status');
   if (state === 'ok') { el.className='sync-status sync-ok'; el.innerHTML='✓ Synchronisiert'; }
   else if (state === 'err') { el.className='sync-status sync-err'; el.innerHTML='⚠ Keine Verbindung'; }
   else { el.className='sync-status sync-loading'; el.innerHTML='<span class="spinner"></span>Verbinde...'; }
 }
+
 function parseTime(t) {
   if (!t) return Infinity;
+  // Komma als Dezimaltrenner normalisieren
   t = t.trim().replace(',', '.');
   const parts = t.split(':');
   if (parts.length===3) return +parts[0]*3600 + +parts[1]*60 + +parts[2];
   if (parts.length===2) return +parts[0]*60 + +parts[1];
   return parseFloat(t)||Infinity;
 }
+
 function formatDate(iso) {
   if (!iso) return '–';
   const [y,m,d] = iso.split('-');
   return `${d}.${m}.${y}`;
 }
+
 function getPBs() {
   const pbs = {};
   results.forEach(r => {
@@ -171,6 +188,7 @@ function getPBs() {
   });
   return pbs;
 }
+
 function renderStats() {
   const pbs = getPBs();
   document.getElementById('stats-grid').innerHTML = `
@@ -179,12 +197,14 @@ function renderStats() {
     <div class="stat-card"><div class="stat-label">Siege</div><div class="stat-value">${results.filter(r=>r.place&&+r.place===1).length}</div></div>
     <div class="stat-card"><div class="stat-label">Bestzeiten</div><div class="stat-value">${Object.keys(pbs).length}</div></div>`;
 }
+
 function renderPBSection() {
   const pbs = getPBs(); const keys = Object.keys(pbs);
   const sec = document.getElementById('pb-section');
   if (!keys.length) { sec.innerHTML=''; return; }
   sec.innerHTML = `<div class="pb-best"><div class="pb-best-title">⭐ Persönliche Bestzeiten</div><div class="pb-grid">${keys.map(k=>`<div class="pb-row"><span class="pb-disc">${k}</span><span class="pb-time-val">${pbs[k].time||'–'}</span></div>`).join('')}</div></div>`;
 }
+
 function placeBadge(place) {
   if (!place) return '';
   const n = parseInt(place);
@@ -192,6 +212,7 @@ function placeBadge(place) {
   const label = n===1?'🥇 Gold':n===2?'🥈 Silber':n===3?'🥉 Bronze':`${n}. Platz`;
   return `<span class="place-badge ${cls}">${label}</span>`;
 }
+
 function render() {
   renderStats(); renderPBSection();
   const pbs = getPBs();
@@ -203,11 +224,13 @@ function render() {
   const filterDisc = curVal;
   const sortVal = document.getElementById('sort-col').value;
   const searchVal = (document.getElementById('search').value||'').toLowerCase();
+
   let filtered = results.filter(r => {
     if (filterDisc && r.discipline!==filterDisc) return false;
     if (searchVal && !(`${r.competition} ${r.location} ${r.discipline}`).toLowerCase().includes(searchVal)) return false;
     return true;
   });
+
   filtered.sort((a,b) => {
     if (sortVal==='date-desc') return (b.date||'').localeCompare(a.date||'');
     if (sortVal==='date-asc') return (a.date||'').localeCompare(b.date||'');
@@ -216,11 +239,13 @@ function render() {
     if (sortVal==='disc-asc') return (a.discipline||'').localeCompare(b.discipline||'');
     return 0;
   });
+
   const container = document.getElementById('cards-container');
   if (!filtered.length) {
     container.innerHTML = `<div class="empty">${results.length===0?'Noch keine Ergebnisse eingetragen.':'Keine Treffer.'}</div>`;
     return;
   }
+
   container.innerHTML = `<div class="cards-grid">${filtered.map(r => {
     const isPB = pbs[r.discipline]&&pbs[r.discipline].fbKey===r.fbKey;
     const badges = [isPB?'<span class="pb-badge">⭐ PB</span>':'', placeBadge(r.place)].filter(Boolean).join('');
@@ -241,6 +266,7 @@ function render() {
     </div>`;
   }).join('')}</div>`;
 }
+
 window.deleteResult = async function(fbKey) {
   if (!confirm('Eintrag löschen?')) return;
   try {
@@ -248,6 +274,7 @@ window.deleteResult = async function(fbKey) {
     showToast('Eintrag gelöscht.');
   } catch(e) { showToast('Fehler beim Löschen.'); }
 };
+
 window.openImport = function() {
   document.getElementById('modal-container').innerHTML = `
     <div class="modal-overlay" id="overlay" onclick="if(event.target.id==='overlay')document.getElementById('modal-container').innerHTML=''">
@@ -266,6 +293,7 @@ window.openImport = function() {
       </div>
     </div>`;
 };
+
 let importData = null;
 window.previewImport = function() {
   const text = document.getElementById('import-text').value.trim();
@@ -282,6 +310,7 @@ window.previewImport = function() {
     importData = null;
   }
 };
+
 window.doImport = async function() {
   if (!importData) return;
   const existingIds = new Set(results.map(r => r.id||r.fbKey));
@@ -300,6 +329,7 @@ window.doImport = async function() {
     btn.disabled = false; btn.textContent = 'Importieren';
   }
 };
+
 window.openModal = function() {
   document.getElementById('modal-container').innerHTML = `
     <div class="modal-overlay" id="overlay" onclick="if(event.target.id==='overlay')document.getElementById('modal-container').innerHTML=''">
@@ -322,6 +352,7 @@ window.openModal = function() {
       </div>
     </div>`;
 };
+
 window.saveResult = async function() {
   const disc = document.getElementById('f-disc').value;
   const date = document.getElementById('f-date').value;
@@ -343,6 +374,7 @@ window.saveResult = async function() {
     btn.disabled = false; btn.textContent = 'Speichern';
   }
 };
+
 onValue(resultsRef, (snapshot) => {
   results = [];
   if (snapshot.exists()) {
